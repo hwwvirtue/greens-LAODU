@@ -11,7 +11,8 @@ getpos_LR getPos_LR1;
 
 
 //路径部分
-int sum_round = 0;
+//int sum_round = 0;
+int step_flag = 0;
 
 //PID部分电机函数参数
 int LEFT_v, RIGHT_v;
@@ -42,11 +43,18 @@ void setup()
   //自动 手动
   pinMode(51, INPUT);
   digitalWrite(51, HIGH);
+  //大 中 小圈
+  pinMode(22, INPUT);
+  digitalWrite(22, HIGH);
+  pinMode(23, INPUT);
+  digitalWrite(23, HIGH);
+  pinMode(24, INPUT);
+  digitalWrite(24, HIGH);
   //车后俩按键
+  pinMode(48, INPUT);
+  digitalWrite(48, HIGH);
   pinMode(49, INPUT);
   digitalWrite(49, HIGH);
-  pinMode(47, INPUT);
-  digitalWrite(47, HIGH);
 }
 
 void loop()
@@ -55,25 +63,31 @@ void loop()
 
   //!路径部分
   //三圈收球
+  //判断初始圈大小
+  if (digitalRead(22) == LOW)
+  {
+    close_size = 2;
+  }
+  else if (digitalRead(23) == LOW)
+  {
+    close_size = 1;
+  }
   if (digitalRead(52) == LOW && digitalRead(53) == HIGH)
   {
     if (close_size == 2)
     {
-      //顺  外圆
-      closeRound(0, 2400, 2100, 0, 1500, 2);
-      sum_round++;
+      if (step_flag == 0)
+      {
+        //顺  外圆
+        closeRound(0, 2400, 1900, 0, 1500, 2);
+        if(1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
+        step_flag=1;
+      }
     }
     if (close_size == 1)
     {
       //中圆
       closeRound(0, 2400, 1000, 0, 1500, 1);
-      sum_round++;
-    }
-    if (close_size == 0)
-    {
-      //内圆
-      closeRound(0, 2400, 900, 0, 1500, 0);
-      sum_round++;
     }
   }
   else if (digitalRead(52) == HIGH && digitalRead(53) == LOW)
@@ -82,22 +96,14 @@ void loop()
     {
       //逆  外圆
       closeRound(0, 2400, 2100, 1, 1500, 2);
-      sum_round++;
     }
     if (close_size == 1)
     {
       //中圆
       closeRound(0, 2400, 1000, 1, 1200, 1);
-      sum_round++;
-    }
-    if (close_size == 0)
-    {
-      //内圆
-      closeRound(0, 2400, 900, 1, 1000, 0);
-      sum_round++;
     }
   }
-  if(-75 < getPos_U.X && getPos_U.X < 75)
+  if (-75 < getPos_U.X && getPos_U.X < 75)
   {
     straightLine(1, 0, 0, 0, 1500);
   }
@@ -105,10 +111,10 @@ void loop()
 }
 
 /**
- * @brief 获取定位模块数据
- * @details 处理Get_buf的定位模块数据
- *          储存在结构体getPos_U的X Y P中
- */
+   @brief 获取定位模块数据
+   @details 处理Get_buf的定位模块数据
+            储存在结构体getPos_U的X Y P中
+*/
 void ComwithYANG()
 {
   int tail = 0x55; //帧尾数值
@@ -146,9 +152,9 @@ void ComwithYANG()
   serialEvent2();
 }
 /**
- * @brief 串口2事件
- * @details 将串口2接受到的数据储存到Get_buf中
- */
+   @brief 串口2事件
+   @details 将串口2接受到的数据储存到Get_buf中
+*/
 void serialEvent2()
 {
   while (Serial2.available())
@@ -171,63 +177,63 @@ void serialEvent2()
 }
 
 /**
- * @brief 和乐天通信
- * 
- */
+   @brief 和乐天通信
+
+*/
 void ComwithTIAN()
 {
-    //与乐天通信部分
-    LEFT_v = PID_speed_Serial[0];
-    RIGHT_v = PID_speed_Serial[1];
-    LEFT_v = 1500;
-    RIGHT_v = 1500;
-    unsigned char left1, right1, left2, right2;
-    left1 = LEFT_v >> 8;
-    right1 = LEFT_v & 0xFF;
-    left2 = RIGHT_v >> 8;
-    right2 = RIGHT_v & 0xFF;
-    if (digitalRead(51) == HIGH)
-    {
-      Serial3.write(0xAA);
-      delay(10);
-      Serial3.write(left1);
-      delay(10);
-      Serial3.write(right1);
-      delay(10);
-      Serial3.write(left2);
-      delay(10);
-      Serial3.write(right2);
-      delay(10);
-      Serial3.write('N');
-      delay(10);
-      Serial3.write(0x55);
-      delay(10);
-    }
-    else
-    {
-      Serial3.write(0xAA);
-      delay(10);
-      Serial3.write(left1);
-      delay(10);
-      Serial3.write(right1);
-      delay(10);
-      Serial3.write(left2);
-      delay(10);
-      Serial3.write(right2);
-      delay(10);
-      Serial3.write('Y');
-      delay(10);
-      Serial3.write(0x55);
-      delay(10);
-    }
+  //与乐天通信部分
+  LEFT_v = PID_speed_Serial[0];
+  RIGHT_v = PID_speed_Serial[1];
+  LEFT_v = 1500;
+  RIGHT_v = 1500;
+  unsigned char left1, right1, left2, right2;
+  left1 = LEFT_v >> 8;
+  right1 = LEFT_v & 0xFF;
+  left2 = RIGHT_v >> 8;
+  right2 = RIGHT_v & 0xFF;
+  if (digitalRead(51) == HIGH)
+  {
+    Serial3.write(0xAA);
+    delay(10);
+    Serial3.write(left1);
+    delay(10);
+    Serial3.write(right1);
+    delay(10);
+    Serial3.write(left2);
+    delay(10);
+    Serial3.write(right2);
+    delay(10);
+    Serial3.write('N');
+    delay(10);
+    Serial3.write(0x55);
+    delay(10);
+  }
+  else
+  {
+    Serial3.write(0xAA);
+    delay(10);
+    Serial3.write(left1);
+    delay(10);
+    Serial3.write(right1);
+    delay(10);
+    Serial3.write(left2);
+    delay(10);
+    Serial3.write(right2);
+    delay(10);
+    Serial3.write('Y');
+    delay(10);
+    Serial3.write(0x55);
+    delay(10);
+  }
 }
 
 /**
- * @brief 
- * 
- * @param ElmoNum 
- * @param vel 
- */
+   @brief
+
+   @param ElmoNum
+   @param vel
+*/
 void VelCrl(unsigned char ElmoNum, int vel)
 {
   if (ElmoNum == MOTOR_ONE)
@@ -237,25 +243,25 @@ void VelCrl(unsigned char ElmoNum, int vel)
 }
 
 /**
- * @brief 获取坐标X
- * @return int 
- */
+   @brief 获取坐标X
+   @return int
+*/
 int GetPosX()
 {
   return getPos_U.X;
 }
 /**
- * @brief 获取坐标Y
- * @return int 
- */
+   @brief 获取坐标Y
+   @return int
+*/
 int GetPosY()
 {
   return getPos_U.Y;
 }
 /**
- * @brief 获取坐标p
- * @return int 
- */
+   @brief 获取坐标p
+   @return int
+*/
 int GetAngle()
 {
   return getPos_U.ANG;

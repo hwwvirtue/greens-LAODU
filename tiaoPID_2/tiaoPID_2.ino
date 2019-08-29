@@ -11,6 +11,7 @@ getpos_LR getPos_LR1;
 
 
 //路径部分
+int step_flag=0;
 int sum_round = 0;
 unsigned char motorNum;
 
@@ -25,7 +26,6 @@ unsigned char Pri_buf[6];
 
 void setup()
 {
-  int step_flag=0;
   //!杨迁口
   Serial2.begin(9600);
   //!乐天口
