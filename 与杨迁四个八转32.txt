@@ -1,0 +1,27 @@
+      getPos_E1.X_1 = Get_buf[1];
+      getPos_E1.X_2 = Get_buf[2];
+      getPos_E1.X_3 = Get_buf[3];
+      getPos_E1.X_4 = Get_buf[4];
+      int a;
+      a = getPos_E1.X_1;
+      getPos2.X |= a<<24;
+      a = getPos_E1.X_2;
+      getPos2.X |= a<<16;
+      a = getPos_E1.X_3;
+      getPos2.X |= a<<8;
+      a = getPos_E1.X_4;
+      getPos2.X |= a;
+
+      getPos_E1.Y_1 = Get_buf[5];
+      getPos_E1.Y_2 = Get_buf[6];
+      getPos_E1.Y_3 = Get_buf[7];
+      getPos_E1.Y_4 = Get_buf[8];
+      int b;
+      b = getPos_E1.Y_1;
+      getPos2.X |= b<<24;
+      b = getPos_E1.Y_2;
+      getPos2.X |= b<<16;
+      b = getPos_E1.Y_3;
+      getPos2.X |= b<<8;
+      b = getPos_E1.Y_4;
+      getPos2.X |= b;

@@ -1,0 +1,166 @@
+IIC_MASTER
+#include<Wire.h>
+#include <i2cmaster.h>//颜色
+//激光
+float JG_R1[5];
+float JG_R2[5];
+float JG_B[5];
+int a,b,c;
+//光电开关
+int value1,value2;
+#define switch1  3
+#define switch2  4
+//颜色传感器
+#define uint16_t unsigned int
+typedef struct
+{
+  uint16_t Red;
+  uint16_t Green;
+  uint16_t Blue;
+  uint16_t Clear;
+} RGB;
+unsigned char Re_buf;
+unsigned char sign = 0;
+RGB rgb;
+byte rgb_data[3] = {0};
+void iic_read(unsigned char add, unsigned char *data, unsigned char len)
+{
+  i2c_start_wait(0xb4);
+  i2c_write(add);
+  i2c_start_wait(0xb5);
+  while (len - 1)
+  {
+    *data++ = i2c_readAck();
+    len--;
+  }
+  *data = i2c_readNak();
+  i2c_stop();
+}
+void setup() {
+  Wire.begin();
+  Serial.begin(19200);
+  //激光
+  Serial1.begin(19200);
+  Serial2.begin(19200);
+  Serial3.begin(19200);
+  //光电
+  pinMode(switch1, INPUT);
+  pinMode(switch2, INPUT);
+  //颜色
+    i2c_init();
+}
+
+void loop() {
+  Wire.beginTransmission(8);
+  //激光
+  Serial1.write("D");
+  for (int i = 0; i < 2; i++)
+  JG_R1[i] = Serial1.parseFloat();
+  int a=10*JG_R1[0];
+  Serial.print(a);
+  Serial.print("  ");
+  Wire.write(a);
+  Serial2.write("D");
+  for (int i = 0; i < 2; i++)
+  JG_R2[i] = Serial2.parseFloat();
+  int b=10*JG_R2[0];
+  Serial.print(b);
+  Wire.write(b);
+  Serial.print("  ");
+  Serial3.write("D");
+  for (int i = 0; i < 2; i++)
+  JG_B[i] = Serial3.parseFloat();
+  int c=10*JG_B[0];
+  Serial.print(c);
+  Wire.write(c);
+  Serial.print("  ");
+  //光电开关
+  value1 = digitalRead(switch1);
+  value2 = digitalRead(switch2);
+  Serial.print("  ");
+  Serial.print(value1);
+  Wire.write(value1);
+  Serial.print("  ");
+  Serial.println(value2);
+  Wire.write(value2);
+  //颜色
+  unsigned char data[9] = {0};
+  if (!sign)
+  iic_read(0x0c, data, 3);
+  rgb_data[0] = data[0];
+  rgb_data[1] = data[1];
+  rgb_data[2] = data[2];
+  Serial.print(rgb_data[0]);
+  Wire.write(rgb_data[0]);
+    Serial.print("  ");
+  Serial.print(rgb_data[1]);
+    Wire.write(rgb_data[1]);
+    Serial.print("  ");
+  Serial.println(rgb_data[2]);
+    Wire.write(rgb_data[0]);
+  Wire.endTransmission();
+  delay(100);
+
+
+
+
+
+
+
+IIC_RECEIVER
+#include<Wire.h>
+float a1,c1,b1;
+int e,f,s,x,k;
+void setup() {
+Wire.begin(8);
+Serial.begin(19200);
+Wire.onReceive(receiveEvent);
+}
+
+void loop() {
+delay(100);
+}
+void receiveEvent()
+{
+  while(Wire.available()>0)
+  {
+int a=Wire.read();
+a1=(float)a/10;
+Serial.print(a1);
+Serial.print("  ");
+int b=Wire.read();
+ b1=(float)b/10;
+Serial.print(b1);
+Serial.print("  ");
+int c=Wire.read();
+ c1=(float)c/10;
+Serial.println(c1);
+
+Serial.print("  ");
+int e=Wire.read();
+Serial.print(e);
+Serial.print("  ");
+int f=Wire.read();
+Serial.println(f);
+
+Serial.print("  ");
+int s=Wire.read();
+Serial.print(s);
+Serial.print("  ");
+int x=Wire.read();
+Serial.print(x);
+Serial.print("  ");
+int k=Wire.read();
+Serial.println(k);
+  }
+
+  }
+  /*int a=Wire.read();
+  Serial.print(a);
+  Serial.print("  ");
+  int b=Wire.read();
+  Serial.println(b);*/
+
+
+
+}

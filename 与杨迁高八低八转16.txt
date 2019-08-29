@@ -1,0 +1,17 @@
+      getPos_LR1.X_L = Get_buf[1];
+      getPos_LR1.X_R = Get_buf[2];
+      getPos2.X = getPos_LR1.X_L;
+      getPos2.X <<= 8;
+      getPos2.X |= getPos_LR1.X_R;
+
+      getPos_LR1.Y_L = Get_buf[3];
+      getPos_LR1.Y_R = Get_buf[4];
+      getPos2.Y = getPos_LR1.Y_L;
+      getPos2.Y <<= 8;
+      getPos2.Y |= getPos_LR1.Y_R;
+
+      getPos_LR1.ANG_L = Get_buf[5];
+      getPos_LR1.ANG_R = Get_buf[6];
+      getPos2.ANG = getPos_LR1.ANG_L;
+      getPos2.ANG <<= 8;
+      getPos2.ANG |= getPos_LR1.ANG_R;
