@@ -25,6 +25,7 @@ unsigned char Pri_buf[6];
 
 void setup()
 {
+  int step_flag=0;
   //!杨迁口
   Serial2.begin(9600);
   //!乐天口
@@ -55,20 +56,31 @@ void loop()
   ComwithYANG();
 
   //!路径部分
-  close_size = 2;
-  if (close_size == 2)
-  { 
-    closeRound(0, 2400, 2100, 0, 1500, 2);
-  }
-  if ( -75 < getPos_U.X && getPos_U.X < 75)
-  {
-    straightLine(1, 0, 0, 0, 1500);
-  }
-  if (1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
-  {
-    straightLine(1, 0, 0, 0, 1500);
-    *motorCMD_Back(motorNum);
-  }
+//  int close_size = 2;
+//  if (close_size == 2)
+//  {
+//if(step_flag==0)
+//{
+    closeRound(0, 2400, 1500, 0, 1500, 2);
+//    if(1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
+//    step_flag=1;
+//}
+//if(step_flag==1)
+//{
+//      closeRound(0, 2400, 1500, 0, 1500, 2);
+  
+  
+//  }
+//  }
+//  if ( -75 < getPos_U.X && getPos_U.X < 75 && 200 < getPos_U.Y && getPos_U.Y < 400)
+//  {
+//    straightLine(1, 0, 0, 0, 1500);
+//  }
+//  if (1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
+//  {
+//    straightLine(1, 0, 0, 0, 1500);
+//    *motorCMD_Back(motorNum);
+//  }
   ComwithTIAN();
 }
 
@@ -147,8 +159,6 @@ void ComwithTIAN()
   //与乐天通信部分
   LEFT_v = PID_speed_Serial[0];
   RIGHT_v = PID_speed_Serial[1];
-  LEFT_v = 1500;
-  RIGHT_v = 1500;
   unsigned char left1, right1, left2, right2;
   left1 = LEFT_v >> 8;
   right1 = LEFT_v & 0xFF;
