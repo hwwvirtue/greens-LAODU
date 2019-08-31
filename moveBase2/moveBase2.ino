@@ -2,6 +2,8 @@
 #include "PID.h"
 #include "moveBase2.h"
 
+#define Logic_DEBUG 
+
 //与杨迁传输部分参数
 int Get_buf[8];
 unsigned char counter = 0;
@@ -9,18 +11,15 @@ unsigned char sign = 0;
 getpos getPos_U;
 getpos_LR getPos_LR1;
 
-
-
 //初始判断条件部分参数
-int Red_Bule = 0;//红(0)  蓝(1)
-int BarrelNum = 0;//路线号
-int Shun_Ni = 0;//顺时针(0) 逆时针(1)
-int close_size = 0;//大(2) 中(1) 小(0)
-
+int Red_Blue = 0;   //红(0)  蓝(1)
+int BarrelNum = 0;  //路线号
+int Shun_Ni = 0;    //顺时针(0) 逆时针(1)
+int close_size = 0; //大(2) 中(1) 小(0)
 
 //路径部分
-int step_flag = 0;//步骤
-unsigned char motorNum;
+int step_flag = 0;      //步骤
+unsigned char motorNum; //倒车电机号
 
 //PID部分电机函数参数
 int LEFT_v, RIGHT_v;
@@ -33,16 +32,16 @@ unsigned char Pri_buf[6];
 
 void setup()
 {
+  Serial.begin(9600);
+
   //!杨迁口
   Serial2.begin(9600);
   //!乐天口
   Serial3.begin(9600);
   //!分球传输高电平
-  //  pinMode(31, INPUT);
-  //  digitalWrite(31, HIGH);
+  pinMode(41, OUTPUT);
   //!射球标志发送串口
   Serial1.begin(9600);
-  Serial.begin(9600);
   //!顺 逆  右手(52)挥,顺  两手挥,逆
   pinMode(52, INPUT);
   digitalWrite(52, LOW);
@@ -58,35 +57,59 @@ void setup()
   digitalWrite(47, HIGH);
 }
 
-
-//int kai = 1;
+/**
+ * @brief 主循环
+ * @note 这是主循环
+ */
 void loop()
 {
   ComwithYANG();
+  Judgment_Condition();
+
   //!路径部分
   if (close_size == 2)
-  {
+  { //走 圈 开 始
     if (step_flag == 0)
     {
-      closeRound(0, 2400, 2000, 1, 1000, 2);
-      if (1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
+      if (Shun_Ni == 0)
+      {
+        closeRound(0, 2400, 2000, 1, 1500, 2);
+        
+      }
+      else
+      {
+        closeRound(0, 2400, 2000, 2, 1500, 2);
+      }
+      if (300 < getPos_U.X && getPos_U.X < 500 && 2300 < getPos_U.Y && getPos_U.Y < 2500)
         step_flag = 1;
     }
     if (step_flag == 1)
     {
-      closeRound(0, 2400, 1500, 0, 1500, 2);
-
-
+      if (Shun_Ni == 0)
+      {
+        closeRound(0, 2400, 1400, 1, 1500, 1);
+      }
+      else
+      {
+        closeRound(0, 2400, 1400, 2, 1500, 1);
+      }
+      if (-100 < getPos_U.X && getPos_U.X < 100 && 300 < getPos_U.Y && getPos_U.Y < 500)
+        step_flag = 2;
     }
-  }
-  if ( -75 < getPos_U.X && getPos_U.X < 75 && 200 < getPos_U.Y && getPos_U.Y < 400)
-  {
-    straightLine(1, 0, 0, 0, 1500);
-  }
-  if (1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
-  {
+  } //走 圈 完 毕
+  if (step_flag == 2)
+  { //撞 边 开 始
     straightLine(1, 0, 0, 0, 1500);
     *motorCMD_Back(motorNum);
+    if(digitalRead(49) == LOW && digitalRead(47) == LOW)
+    {
+      
+      step_flag = 3;
+    }
+  } //撞 边 完 毕
+  if (step_flag == 3)
+  {
+    digitalWrite(41, HIGH);
   }
   ComwithTIAN();
 }
@@ -157,7 +180,6 @@ void serialEvent2()
   }
 }
 
-
 /**
    @brief 获取坐标X
    @return int
@@ -189,18 +211,17 @@ int GetAngle()
 */
 void Judgment_Condition()
 {
-    //判断 红 蓝 方
+  //判断 红 蓝 方
   if (digitalRead(28) == LOW && digitalRead(29) == HIGH)
   {
-    Red_Bule = 0;
+    Red_Blue = 0;
   }
   else if (digitalRead(28) == HIGH && digitalRead(29) == LOW)
   {
-    Red_Bule = 1;
+    Red_Blue = 1;
   }
 
-
-    //判断 顺 逆
+  //判断 顺 逆
   if (digitalRead(52) == LOW && digitalRead(53) == HIGH)
   {
     Shun_Ni = 0;
@@ -209,7 +230,6 @@ void Judgment_Condition()
   {
     Shun_Ni = 1;
   }
-
 
   //判断初始圈大小
   if (digitalRead(22) == LOW && digitalRead(23) == HIGH)
@@ -221,17 +241,12 @@ void Judgment_Condition()
     close_size = 1;
   }
 }
-
-
-
-
-
 /**
-   @brief
-
-   @param ElmoNum
-   @param vel
-*/
+ * @brief 
+ * 
+ * @param ElmoNum 
+ * @param vel 
+ */
 void VelCrl(unsigned char ElmoNum, int vel)
 {
   if (ElmoNum == MOTOR_ONE)
@@ -239,8 +254,6 @@ void VelCrl(unsigned char ElmoNum, int vel)
   else
     Point_speed_Serial[1] = vel;
 }
-
-
 
 /**
    @brief 和乐天通信
