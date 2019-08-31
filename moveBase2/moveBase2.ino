@@ -2,8 +2,9 @@
 #include "PID.h"
 #include "moveBase2.h"
 
-#define Logic_DEBUG 
+//#define Logic_DEBUG
 
+int _millis = 0;
 //与杨迁传输部分参数
 int Get_buf[8];
 unsigned char counter = 0;
@@ -64,7 +65,9 @@ void setup()
 void loop()
 {
   ComwithYANG();
-  Judgment_Condition();
+  //Judgment_Condition();
+  close_size = 2;
+  Shun_Ni = 0;
 
   //!路径部分
   if (close_size == 2)
@@ -74,7 +77,10 @@ void loop()
       if (Shun_Ni == 0)
       {
         closeRound(0, 2400, 2000, 1, 1500, 2);
-        
+#ifdef Logic_DEBUG
+        Serial.print(millis());
+        Serial.println("  closeRound1");
+#endif
       }
       else
       {
@@ -82,36 +88,65 @@ void loop()
       }
       if (300 < getPos_U.X && getPos_U.X < 500 && 2300 < getPos_U.Y && getPos_U.Y < 2500)
         step_flag = 1;
+#ifdef Logic_DEBUG
+      if (millis() - _millis > 3000)
+        step_flag = 1;
+#endif
     }
     if (step_flag == 1)
     {
       if (Shun_Ni == 0)
       {
         closeRound(0, 2400, 1400, 1, 1500, 1);
+#ifdef Logic_DEBUG
+        Serial.print(millis());
+        Serial.println("  closeRound2");
+#endif
       }
       else
       {
         closeRound(0, 2400, 1400, 2, 1500, 1);
       }
-      if (-100 < getPos_U.X && getPos_U.X < 100 && 300 < getPos_U.Y && getPos_U.Y < 500)
+      if (299< getPos_U.X && getPos_U.X < 500 && 300 < getPos_U.Y && getPos_U.Y < 500)
         step_flag = 2;
+#ifdef Logic_DEBUG
+      if (millis() - _millis > 6000)
+        step_flag = 2;
+#endif
     }
   } //走 圈 完 毕
+
+
   if (step_flag == 2)
   { //撞 边 开 始
+#ifdef Logic_DEBUG
+    Serial.print(millis());
+    Serial.println("  zhuangbian");
+#endif
     straightLine(1, 0, 0, 0, 1500);
     *motorCMD_Back(motorNum);
-    if(digitalRead(49) == LOW && digitalRead(47) == LOW)
+    if (digitalRead(49) == LOW && digitalRead(47) == LOW)
     {
-      
       step_flag = 3;
     }
+#ifdef Logic_DEBUG
+    if (millis() - _millis > 10000)
+      step_flag = 3;
+#endif
   } //撞 边 完 毕
+
+
   if (step_flag == 3)
   {
     digitalWrite(41, HIGH);
+#ifdef Logic_DEBUG
+    Serial.print(millis());
+    Serial.println("  sheqiu");
+    step_flag = 0;
+    _millis = millis();
+#endif
   }
-  ComwithTIAN();
+  //ComwithTIAN();
 }
 
 /**
@@ -240,6 +275,7 @@ void Judgment_Condition()
   {
     close_size = 1;
   }
+  close_size = 2;
 }
 /**
  * @brief 
