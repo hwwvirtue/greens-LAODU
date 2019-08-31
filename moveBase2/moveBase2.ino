@@ -2,24 +2,21 @@
 #include "PID.h"
 #include "moveBase2.h"
 
-//与杨迁传输部分参数
+//!与杨迁传输部分参数
 int Get_buf[8];
 unsigned char counter = 0;
 unsigned char sign = 0;
 getpos getPos_U;
 getpos_LR getPos_LR1;
 
+//!初始判断条件部分参数
+int Red_Bule = 0;   //红(0)  蓝(1)
+int BarrelNum = 0;  //路线号
+int Shun_Ni = 0;    //顺时针(0) 逆时针(1)
+int close_size = 0; //大(2) 中(1) 小(0)
 
-
-//初始判断条件部分参数
-int Red_Bule = 0;//红(0)  蓝(1)
-int BarrelNum = 0;//路线号
-int Shun_Ni = 0;//顺时针(0) 逆时针(1)
-int close_size = 0;//大(2) 中(1) 小(0)
-
-
-//路径部分
-int step_flag = 0;//步骤
+//!路径部分
+int step_flag = 0; //步骤
 unsigned char motorNum;
 
 //PID部分电机函数参数
@@ -28,8 +25,19 @@ int LEFT_v, RIGHT_v;
 //POINT2POINT部分电机函数参数
 int Point_speed_Serial[2] = {0};
 
-//与乐天传输部分参数
+/**
+ * @brief  与乐天传输部分参数
+ */
 unsigned char Pri_buf[6];
+
+/**
+ * @brief 任务标志
+ * @note 值为当前运行或应该执行的任务
+  *       task_index = 1：走圆
+  *                    2：靠边
+  *                    3：射球
+ */
+int task_index = 0;
 
 void setup()
 {
@@ -58,31 +66,43 @@ void setup()
   digitalWrite(47, HIGH);
 }
 
-
-//int kai = 1;
 void loop()
 {
   ComwithYANG();
-  //!路径部分
-  if (close_size == 2)
+  ///走圆
+  if (task_index == 1)
   {
-    if (step_flag == 0)
+    //
+    if (close_size == 2)
     {
-      closeRound(0, 2400, 2000, 1, 1000, 2);
-      if (1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
-        step_flag = 1;
-    }
-    if (step_flag == 1)
-    {
-      closeRound(0, 2400, 1500, 0, 1500, 2);
-
-
+      if (step_flag == 0)
+      {
+        closeRound(0, 2400, 2000, 1, 1000, 2);
+        if (1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
+          step_flag = 1;
+      }
+      if (step_flag == 1)
+      {
+        closeRound(0, 2400, 1500, 0, 1500, 2);
+        if (-75 < getPos_U.X && getPos_U.X < 75 && 200 < getPos_U.Y && getPos_U.Y < 400)
+        {
+          task_index = 2;
+          step_flag = 0;
+        }
+      }
     }
   }
-  if ( -75 < getPos_U.X && getPos_U.X < 75 && 200 < getPos_U.Y && getPos_U.Y < 400)
+
+  ///直线靠边
+  if (task_index == 2)
   {
-    straightLine(1, 0, 0, 0, 1500);
   }
+
+  ///射球
+  if (task_index == 2)
+  {
+  }
+
   if (1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
   {
     straightLine(1, 0, 0, 0, 1500);
@@ -157,7 +177,6 @@ void serialEvent2()
   }
 }
 
-
 /**
    @brief 获取坐标X
    @return int
@@ -189,7 +208,7 @@ int GetAngle()
 */
 void Judgment_Condition()
 {
-    //判断 红 蓝 方
+  //判断 红 蓝 方
   if (digitalRead(28) == LOW && digitalRead(29) == HIGH)
   {
     Red_Bule = 0;
@@ -199,8 +218,7 @@ void Judgment_Condition()
     Red_Bule = 1;
   }
 
-
-    //判断 顺 逆
+  //判断 顺 逆
   if (digitalRead(52) == LOW && digitalRead(53) == HIGH)
   {
     Shun_Ni = 0;
@@ -209,7 +227,6 @@ void Judgment_Condition()
   {
     Shun_Ni = 1;
   }
-
 
   //判断初始圈大小
   if (digitalRead(22) == LOW && digitalRead(23) == HIGH)
@@ -221,10 +238,6 @@ void Judgment_Condition()
     close_size = 1;
   }
 }
-
-
-
-
 
 /**
    @brief
@@ -239,8 +252,6 @@ void VelCrl(unsigned char ElmoNum, int vel)
   else
     Point_speed_Serial[1] = vel;
 }
-
-
 
 /**
    @brief 和乐天通信
