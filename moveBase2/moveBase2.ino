@@ -1,6 +1,6 @@
 #include "POINT2POINT.h"
 #include "PID.h"
-#include "tiaoPID_2.h"
+#include "moveBase2.h"
 
 //与杨迁传输部分参数
 int Get_buf[8];
@@ -64,30 +64,30 @@ void loop()
 {
   ComwithYANG();
   //!路径部分
-//  if (close_size == 2)
-//  {
-//    if (step_flag == 0)
-//    {
+  if (close_size == 2)
+  {
+    if (step_flag == 0)
+    {
       closeRound(0, 2400, 2000, 1, 1000, 2);
-//      if (1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
-//        step_flag = 1;
-//    }
-//    if (step_flag == 1)
-//    {
-//      closeRound(0, 2400, 1500, 0, 1500, 2);
-//
-//
-//    }
-//  }
-//  if ( -75 < getPos_U.X && getPos_U.X < 75 && 200 < getPos_U.Y && getPos_U.Y < 400)
-//  {
-//    straightLine(1, 0, 0, 0, 1500);
-//  }
-//  if (1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
-//  {
-//    straightLine(1, 0, 0, 0, 1500);
-//    *motorCMD_Back(motorNum);
-//  }
+      if (1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
+        step_flag = 1;
+    }
+    if (step_flag == 1)
+    {
+      closeRound(0, 2400, 1500, 0, 1500, 2);
+
+
+    }
+  }
+  if ( -75 < getPos_U.X && getPos_U.X < 75 && 200 < getPos_U.Y && getPos_U.Y < 400)
+  {
+    straightLine(1, 0, 0, 0, 1500);
+  }
+  if (1775 < getPos_U.Y && getPos_U.Y < 1850 && -75 < getPos_U.X && getPos_U.X < 75)
+  {
+    straightLine(1, 0, 0, 0, 1500);
+    *motorCMD_Back(motorNum);
+  }
   ComwithTIAN();
 }
 

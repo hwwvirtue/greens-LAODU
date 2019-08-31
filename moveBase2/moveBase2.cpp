@@ -1,22 +1,22 @@
 #include"POINT2POINT.h"
 #include"PID.h"
-#include"tiaoPID_2.h"
+#include"moveBase2.h"
 #include"math.h"
 
 #define  PI 3.1415926
 ActPoint initpoint;     //点到点算法 初始点结构体初始化
 float initangle = 0;
-ActPoint targetpoint;    //目标点结构体初始化
+ActPoint targetpoint;		//目标点结构体初始化
 float targetangle = 0;
-ActLine2 presentline;   //初始直线结构体初始化
-ActLine2 targetline;    //目标直线结构体初始化
+ActLine2 presentline;		//初始直线结构体初始化
+ActLine2 targetline;		//目标直线结构体初始化
 
 
-PidTypeDef PID_distance;  //PID结构体初始化
+PidTypeDef PID_distance;	//PID结构体初始化
 PidTypeDef PID_angle;
-PidTypeDef PID_DisArc;    //角度对距离增量PID
+PidTypeDef PID_DisArc;		//角度对距离增量PID
 
-fp32 PID_param_dis[3];    //距离PID变量参数结构体初始化
+fp32 PID_param_dis[3];		//距离PID变量参数结构体初始化
 fp32 PID_param_angle[3];//角度PID变量参数结构体初始化
 fp32 PID_param_DisArc[3];//距离转角度PID变量参数结构体初始化
 
@@ -144,7 +144,7 @@ float AnglePid(float valueSet,float valueNow)
 
 /**
    @brief  PID 最小转弯
-   @note    无前进速度 仅为绕自身旋转中心旋转
+   @note		无前进速度 仅为绕自身旋转中心旋转
    @param  angle：给定角度,为正左转，为负右转
    @param  gospeed：基础速度
    @retval None
@@ -158,7 +158,7 @@ void minimum_Turn(float angle)
   PID_param_angle[1] = 0;
   PID_param_angle[2] = 0;
   getAngle = GetAngle();
-  speed = AnglePid(angle, getAngle);  //根据角度PID算出转向的差速
+  speed = AnglePid(angle, getAngle);	//根据角度PID算出转向的差速
   *motorCMD(1, 0, speed);
   *motorCMD(2, 0, speed);
 }
@@ -175,7 +175,7 @@ void forward_Turn(float angle, float gospeed)
   PID_param_angle[2] = 0;
 
   getAngle = GetAngle();
-  speed = AnglePid(angle, getAngle);  //根据角度PID算出转向的差速
+  speed = AnglePid(angle, getAngle);	//根据角度PID算出转向的差速
   if (gospeed < 0)
   {
     *motorCMD(1, gospeed, speed);
@@ -189,9 +189,9 @@ void forward_Turn(float angle, float gospeed)
 }
 /**
     @brief  新底盘直线闭环
-    @note Ax1+By1+C1=0 直线方程一般式
-    @note 可由A1，B1，C1设置直线方程后，沿目标直线方向行走
-    @note 前进速度可由距离PID调整  问题是两个PID不太好调  待调试后解决
+    @note	Ax1+By1+C1=0 直线方程一般式
+    @note	可由A1，B1，C1设置直线方程后，沿目标直线方向行走
+    @note	前进速度可由距离PID调整  问题是两个PID不太好调  待调试后解决
     @note angleAdd为正值
 
     @param A1
@@ -202,7 +202,7 @@ void forward_Turn(float angle, float gospeed)
     @retval return_value 0为 未到达目标直线  1为 已到达目标直线距离范围内
 
     @note 大动作 在目标直线轨道上行驶 可通过坐标判断在直线的哪个位置
-    @note 用到了距离-角度PID 来接近目标轨道 角度PID来保证沿着直线轨道行驶
+	  @note 用到了距离-角度PID 来接近目标轨道 角度PID来保证沿着直线轨道行驶
     @note 用到了两种小动作 离目标直线距离远时 用前进转弯来接近
     @note 接近到达目标直线时原地旋转调整到目标方向 在用前进转弯来保持行驶直线
 */
@@ -210,15 +210,15 @@ uint8_t straightLine(float A1, float b1, float C1, uint8_t dir, float setSpeed)
 {
   fp32 setAngle = 0;
   fp32 angleAdd = 0;
-  int return_value = 0;
+  int	return_value = 0;
   fp32 getAngleNow = GetAngle();
   fp32 getX = GetPosX();
   fp32 getY = GetPosY();
   float distance = ((A1 * getX) + (b1 * getY) + C1) / sqrt((A1 * A1) + (b1 * b1)); //当前点到目标直线距离
 
-  //    PID_param_dis[0]=0.5f;
-  //    PID_param_dis[0]=0;
-  //    PID_param_dis[0]=0;
+  //		PID_param_dis[0]=0.5f;
+  //		PID_param_dis[0]=0;
+  //		PID_param_dis[0]=0;
 
   PID_param_DisArc[0] = 0.08;
   PID_param_DisArc[1] = 0;
@@ -227,26 +227,26 @@ uint8_t straightLine(float A1, float b1, float C1, uint8_t dir, float setSpeed)
 
   angleAdd = Distance_Arc_Pid(distance);
   //离直线35以内时表示到达直线
-  if ((distance < 150) && (distance > -150))  //到达直线位置时用最小半径旋转调整为目标角度
+  if ((distance < 150) && (distance > -150))	//到达直线位置时用最小半径旋转调整为目标角度
   {
     angleAdd = 0;
     return_value = 1;
     forward_Turn(setAngle, setSpeed);
   }
-  else    //未到达目标直线距离范围内时，用前进转弯来接近目标直线
+  else		//未到达目标直线距离范围内时，用前进转弯来接近目标直线
   {
     if ((b1 > -0.005f) && (b1 < 0.005f))
     {
       if (!dir)
       {
-        setAngle = 0;             //目标角度为水平直线 方向由dir确定 0为右 1为左
+        setAngle = 0;							//目标角度为水平直线 方向由dir确定 0为右 1为左
         forward_Turn(setAngle + angleAdd, setSpeed);
       }
       else
       {
         if (A1 > 0)
         {
-          setAngle = -180;      //目标角度为水平直线 方向由dir确定 0为上 1为下
+          setAngle = -180;			//目标角度为水平直线 方向由dir确定 0为上 1为下
           forward_Turn(setAngle - angleAdd, setSpeed); //角度PID转向目标角度
         }
         else
