@@ -12,6 +12,8 @@ unsigned char sign = 0;
 getpos getPos_U;
 getpos_LR getPos_LR1;
 
+
+//dddd
 //初始判断条件部分参数
 int Red_Blue = 0;   //红(0)  蓝(1)
 int BarrelNum = 0;  //路线号
