@@ -1,13 +1,27 @@
+
+/**
+ * @file moveBase2.ino
+ * @author your name (you@domain.com)
+ * @brief 
+ * @version 0.1
+ * @date 2019-09-05
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
 #include "POINT2POINT.h"
 #include "PID.h"
 #include "moveBase2.h"
 
+/*显示器*/
+#include <Adafruit_SSD1306.h>
+#define OLED_RESET 4
+Adafruit_SSD1306 display(OLED_RESET);
 
 //调路径用
 //#define Logic_DEBUG
 #define Logic_DEBUG2
 
-int _millis = 0;
 //与杨迁传输部分参数
 int Get_buf[8];
 unsigned char counter = 0;
@@ -34,10 +48,12 @@ int Point_speed_Serial[2] = {0};
 //与乐天传输部分参数
 unsigned char Pri_buf[6];
 
+long int _millis = 0;
+
 void setup()
 {
   Serial.begin(9600);
-  
+
   //!杨迁口
   Serial2.begin(9600);
   //!乐天口
@@ -60,6 +76,12 @@ void setup()
   digitalWrite(48, HIGH);
   pinMode(49, INPUT);
   digitalWrite(49, HIGH);
+
+  //!显示器启动
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.display();
+  delay(500);
+  display.clearDisplay();
 }
 
 /**
@@ -72,7 +94,7 @@ void loop()
   //Judgment_Condition();
   close_size = 2;
   Shun_Ni = 0;
-    //step_flag = ;
+  //step_flag = ;
 
   //!路径部分
   if (close_size == 2)
@@ -122,7 +144,7 @@ void loop()
   } //走 圈 完 毕
   else
   { //走 圈 开 始(中 圈 开 始)
-        if (step_flag == 0)
+    if (step_flag == 0)
     {
       if (Shun_Ni == 0)
       {
@@ -165,11 +187,11 @@ void loop()
 #endif
     }
   } //走 圈 完 毕(中 圈 开 始)
-  if(step_flag == 2)
+  if (step_flag == 2)
   {
     straightLine(1, 0, 0, 0, 1500);
-//    if(299 < getPos_U.X && getPos_U.X < 500 && 1825 < getPos_U.Y && getPos_U.Y < 1925)
-//       step_flag = 3;
+    //    if(299 < getPos_U.X && getPos_U.X < 500 && 1825 < getPos_U.Y && getPos_U.Y < 1925)
+    //       step_flag = 3;
   }
   if (step_flag == 3)
   { //撞 中 间 开 始
@@ -177,7 +199,7 @@ void loop()
     Serial.print(millis());
     Serial.println("  zhuangbian");
 #endif
-    back_Turn(0,1500);
+    back_Turn(0, 1500);
     if (digitalRead(48) == LOW && digitalRead(49) == LOW)
     {
       PID_speed_Serial[0] = 0;
@@ -191,7 +213,7 @@ void loop()
   } //撞 中 间 完 毕
 
   if (step_flag == 4)
-  { //开 始 给 分 球，射 球 发 送 标 志                 
+  { //开 始 给 分 球，射 球 发 送 标 志
     digitalWrite(40, HIGH);
     digitalWrite(42, HIGH);
     step_flag = 5;
@@ -203,13 +225,16 @@ void loop()
 #endif
   } //结 束 给 分 球，射 球 发 送 标 志
   if (step_flag == 5)
-  {//若 没 球，重 新 收 球
-    if(digitalRead(41) == HIGH)
+  { //若 没 球，重 新 收 球
+    if (digitalRead(41) == HIGH)
     {
       step_flag = 0;
     }
   }
   ComwithTIAN();
+
+  Display();
+
 }
 
 /**
@@ -407,4 +432,47 @@ void ComwithTIAN()
   delay(10);
   Serial3.write(0x55);
   delay(10);
+}
+
+void Display()
+{
+  if (millis() - _millis >= 100)
+  {
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.clearDisplay();
+
+    display.setCursor(0, 0);
+    display.print("Time:");
+    display.setCursor(40,0);
+    display.print(millis());
+
+    display.setCursor(0, 10);
+    display.print("L:");
+    display.setCursor(10,10);
+    display.print(LEFT_v);
+
+    display.setCursor(64, 10);
+    display.print("R:");
+    display.setCursor(74, 10);
+    display.print(RIGHT_v);
+
+    display.setCursor(0,18);
+    display.print("X:");
+    display.setCursor(10,18);
+    display.print(getPos_U.X);
+
+    display.setCursor(50, 18);
+    display.print("Y:");
+    display.setCursor(60, 18);
+    display.print(getPos_U.Y);
+
+    display.setCursor(90, 18);
+    display.print("P:");
+    display.setCursor(100, 18);
+    display.print(getPos_U.ANG);
+
+    display.display();
+    _millis = millis();
+  }
 }
