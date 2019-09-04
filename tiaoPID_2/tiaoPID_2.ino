@@ -122,12 +122,12 @@ void ComwithYANG()
       getPos_U.ANG <<= 8;
       getPos_U.ANG |= getPos_LR1.ANG_R;
 
-      Serial.print("x:");
-      Serial.println(getPos_U.X);
-      Serial.print("y:");
-      Serial.println(getPos_U.Y);
-      Serial.print("ang:");
-      Serial.println(getPos_U.ANG);
+//      Serial.print("x:");
+//      Serial.println(getPos_U.X);
+//      Serial.print("y:");
+//      Serial.println(getPos_U.Y);
+//      Serial.print("ang:");
+//      Serial.println(getPos_U.ANG);
     }
   }
   serialEvent2();
@@ -251,10 +251,12 @@ void ComwithTIAN()
   //与乐天通信部分
   LEFT_v = motor1();
   RIGHT_v = motor2();
-    Serial.print("LEFT:");
-    Serial.println(LEFT_v);
-    Serial.print("Right:");
-    Serial.println(RIGHT_v);
+  LEFT_v = 1200;
+  RIGHT_v = 1900;
+//    Serial.print("LEFT:");
+//    Serial.println(LEFT_v);
+//    Serial.print("Right:");
+//    Serial.println(RIGHT_v);
   unsigned char left1, right1, left2, right2;
   left1 = LEFT_v >> 8;
   right1 = LEFT_v & 0xFF;
@@ -265,7 +267,7 @@ void ComwithTIAN()
   Serial3.write(0xAA);
   delay(10);
   Serial3.write(left1);
-  delay(10);+
+  delay(10);
   Serial3.write(right1);
   delay(10);
   Serial3.write(left2);

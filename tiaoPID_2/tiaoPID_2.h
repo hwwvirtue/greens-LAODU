@@ -5,7 +5,6 @@ typedef unsigned     char uint8_t;
 typedef float fp32;
 
 
-
 //与杨迁传输部分结构体
 static struct getpos_LR { //高八低八转16
   int X_L;

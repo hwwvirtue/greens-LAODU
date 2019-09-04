@@ -2,6 +2,7 @@
 #include"PID.h"
 #include"moveBase2.h"
 #include"math.h"
+#include "variant.h"
 
 #define  PI 3.1415926
 ActPoint initpoint;     //点到点算法 初始点结构体初始化
@@ -51,7 +52,8 @@ float *motorCMD(unsigned char motorNUM, int speedBase, int Vel)
     PID_speed_Serial[0] = speedBase - Vel;
   if (motorNUM == 2)
     PID_speed_Serial[1] = speedBase + Vel;
-  
+//                                            Serial.print("Vel=");
+//                                            Serial.println(Vel);
   return PID_speed_Serial;
 }
 float motor1()
@@ -72,12 +74,12 @@ float motor2()
               Vel:差值为正则为右转;
     @retval
 */
-float *motorCMD_Back(unsigned char motorNUM)
+float *motorCMD_Back(unsigned char motorNUM, int speedBase, int Vel)
 {
-  if (motorNUM == '1')
-    PID_speed_Serial[0] = -PID_speed_Serial[0];
   if (motorNUM == '2')
-    PID_speed_Serial[1] = -PID_speed_Serial[1];
+    PID_speed_Serial[0] = -(speedBase - Vel);
+  if (motorNUM == '1')
+    PID_speed_Serial[1] = -(speedBase + Vel);
   return PID_speed_Serial;
 }
 
@@ -187,6 +189,37 @@ void forward_Turn(float angle, float gospeed)
     *motorCMD(2, gospeed, speed);
   }
 }
+
+
+/**
+ * @brief  PID 后退转弯
+ * @note
+ * @param  angle：给定角度,为正左转，为负右转
+ * @param  gospeed：基础速度
+ * @retval None
+ */
+//小动作 倒行转弯
+void back_Turn(float angle,float gospeed)
+{
+    float getAngle=0.0f;
+    float speed=0.0f;
+    PID_param_angle[0]=5;
+    PID_param_angle[1]=0;
+    PID_param_angle[2]=0;
+
+    getAngle=GetAngle();
+    speed = AnglePid(angle,getAngle);  //根据角度PID算出转向的差速
+    *motorCMD_Back(1, gospeed, speed);
+    *motorCMD_Back(2, gospeed, speed);
+}
+
+
+
+
+
+
+
+
 /**
     @brief  新底盘直线闭环
     @note	Ax1+By1+C1=0 直线方程一般式
@@ -220,7 +253,7 @@ uint8_t straightLine(float A1, float b1, float C1, uint8_t dir, float setSpeed)
   //		PID_param_dis[0]=0;
   //		PID_param_dis[0]=0;
 
-  PID_param_DisArc[0] = 0.08;
+  PID_param_DisArc[0] = 0.04;
   PID_param_DisArc[1] = 0;
   PID_param_DisArc[2] = 0;
 
@@ -299,11 +332,11 @@ void closeRound(float x, float y, float R, float clock, float forwardspeed, int 
   k = (GetPosX() - x) / (y - GetPosY()); //前进直线斜率
   if (roundsize == 2)
   {
-    PID_param_angle[0] = 10.0f;
+    PID_param_angle[0] = 30.0f;
     PID_param_angle[1] = 0.0f;
     PID_param_angle[2] = 0.0f;
 
-    PID_param_DisArc[0] = 0.05;
+    PID_param_DisArc[0] = 0.08;
     PID_param_DisArc[1] = 0;
     PID_param_DisArc[2] = 0;
   }
@@ -339,7 +372,10 @@ void closeRound(float x, float y, float R, float clock, float forwardspeed, int 
     else if (GetPosY() == y && GetPosX() < x)
       Agl = 0;
     setangle = Agl - Distance_Arc_Pid(target_Distance); //距离赋值给角度的增量 Agl为角度转换常量
+          //    Serial.print(Agl);
+          //     Serial.print(setangle);
     frontspeed = AnglePid(setangle, GetAngle()); //角度PID计算两轮速度差值
+   
   }
   else if (clock == 2)
   {

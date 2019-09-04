@@ -26,7 +26,7 @@ static struct getpos { //用short型因为DUE是32位处理器,它的int型为4�
 static float PID_speed_Serial[2];
 
 //电机赋值函数
-float *motorCMD_Back(unsigned char motorNUM);
+float *motorCMD_Back(unsigned char motorNUM, int speedBase, int Vel);
 float motor1();
 float motor2();
 
