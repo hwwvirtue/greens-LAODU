@@ -14,6 +14,7 @@
 #include "moveBase2.h"
 
 /*显示器*/
+long int _millis1 = 0;
 #include "Adafruit_SSD1306.h"
 #define OLED_RESET 4
 Adafruit_SSD1306 display(OLED_RESET);
@@ -436,7 +437,7 @@ void ComwithTIAN()
 
 void Display()
 {
-  if (millis() - _millis >= 100)
+  if (millis() - _millis1 >= 100)
   {
     display.setTextSize(1);
     display.setTextColor(WHITE);
@@ -473,6 +474,6 @@ void Display()
     display.print(getPos_U.ANG);
 
     display.display();
-    _millis = millis();
+    _millis1 = millis();
   }
 }
