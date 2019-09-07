@@ -1,5 +1,5 @@
 {
     "board": "arduino:sam:arduino_due_x_dbg",
-    "port": "COM11",
+    "port": "COM6",
     "sketch": "moveBase2.ino"
 }

@@ -728,3 +728,5 @@ void Adafruit_SSD1306::drawFastVLineInternal(int16_t x, int16_t __y, int16_t __h
     }
   }
 }
+
+Adafruit_SSD1306 display(4);

@@ -76,10 +76,10 @@ float motor2()
 */
 float *motorCMD_Back(unsigned char motorNUM, int speedBase, int Vel)
 {
-  if (motorNUM == '2')
-    PID_speed_Serial[0] = -(speedBase - Vel);
-  if (motorNUM == '1')
-    PID_speed_Serial[1] = -(speedBase + Vel);
+  if (motorNUM == 2)
+    PID_speed_Serial[0] = -(speedBase + Vel);
+  if (motorNUM == 1)
+    PID_speed_Serial[1] = -(speedBase - Vel);
   return PID_speed_Serial;
 }
 
@@ -172,7 +172,7 @@ void forward_Turn(float angle, float gospeed)
   float speed = 0.0f;
 
 
-  PID_param_angle[0] = 15;
+  PID_param_angle[0] = 30;
   PID_param_angle[1] = 0;
   PID_param_angle[2] = 0;
 
@@ -203,7 +203,7 @@ void back_Turn(float angle,float gospeed)
 {
     float getAngle=0.0f;
     float speed=0.0f;
-    PID_param_angle[0]=5;
+    PID_param_angle[0]=50;
     PID_param_angle[1]=0;
     PID_param_angle[2]=0;
 
@@ -253,21 +253,21 @@ uint8_t straightLine(float A1, float b1, float C1, uint8_t dir, float setSpeed)
   //		PID_param_dis[0]=0;
   //		PID_param_dis[0]=0;
 
-  PID_param_DisArc[0] = 0.04;
+  PID_param_DisArc[0] = 0.15;
   PID_param_DisArc[1] = 0;
   PID_param_DisArc[2] = 0;
 
 
   angleAdd = Distance_Arc_Pid(distance);
   //离直线35以内时表示到达直线
-  if ((distance < 150) && (distance > -150))	//到达直线位置时用最小半径旋转调整为目标角度
-  {
-    angleAdd = 0;
-    return_value = 1;
-    forward_Turn(setAngle, setSpeed);
-  }
-  else		//未到达目标直线距离范围内时，用前进转弯来接近目标直线
-  {
+//  if ((distance < 150) && (distance > -150))	//到达直线位置时用最小半径旋转调整为目标角度
+//  {
+//    angleAdd = 0;
+//    return_value = 1;
+//    forward_Turn(setAngle, setSpeed);
+//  }
+//  else		//未到达目标直线距离范围内时，用前进转弯来接近目标直线
+//  {
     if ((b1 > -0.005f) && (b1 < 0.005f))
     {
       if (!dir)
@@ -305,7 +305,7 @@ uint8_t straightLine(float A1, float b1, float C1, uint8_t dir, float setSpeed)
 
     }
     return_value = 0;
-  }
+  //}
   return return_value;
 }
 
@@ -352,7 +352,7 @@ void closeRound(float x, float y, float R, float clock, float forwardspeed, int 
   }
   if (roundsize == 0)
   {
-    PID_param_angle[0] = 45.0f;
+    PID_param_angle[0] = 60.0f;
     PID_param_angle[1] = 0.0f;
     PID_param_angle[2] = 0.0f;
 

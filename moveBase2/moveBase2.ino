@@ -1,14 +1,3 @@
-
-/**
- * @file moveBase2.ino
- * @author your name (you@domain.com)
- * @brief 
- * @version 0.1
- * @date 2019-09-05
- * 
- * @copyright Copyright (c) 2019
- * 
- */
 #include "POINT2POINT.h"
 #include "PID.h"
 #include "moveBase2.h"
@@ -16,13 +5,21 @@
 /*显示器*/
 long int _millis1 = 0;
 #include "Adafruit_SSD1306.h"
-#define OLED_RESET 4
-Adafruit_SSD1306 display(OLED_RESET);
+//#define OLED_RESET 4
+//Adafruit_SSD1306 display(OLED_RESET);
 
 //调路径用
 //#define Logic_DEBUG
-#define Logic_DEBUG2
 
+
+#define shun_PIN  A0
+#define ni_PIN  A1
+
+#define To_fenqiu_PIN  52
+#define From_fenqiu_PIN  53
+
+long int _millis = 0;
+long int _millis2 = 0;
 //与杨迁传输部分参数
 int Get_buf[8];
 unsigned char counter = 0;
@@ -33,13 +30,20 @@ getpos_LR getPos_LR1;
 //初始判断条件部分参数
 int Red_Blue = 0;   //红(0)  蓝(1)
 int BarrelNum = 0;  //路线号
-int Shun_Ni = 0;    //顺时针(0) 逆时针(1)
+int Shun_Ni = 0;    //顺时针(1) 逆时针(2)
 int close_size = 0; //大(2) 中(1) 小(0)
 
 //路径部分
-int step_flag = 0;      //步骤
+int step_flag = -1; //步骤
+int state_flag = 0;
 unsigned char motorNum; //倒车电机号
+int seconds;
 
+int GET_X_before= 0;
+int GET_X_d = 0;
+int GET_Y_before= 0;
+int GET_Y_d = 0;
+int GET_POS_d= 0;
 //PID部分电机函数参数
 int LEFT_v, RIGHT_v;
 
@@ -49,8 +53,6 @@ int Point_speed_Serial[2] = {0};
 //与乐天传输部分参数
 unsigned char Pri_buf[6];
 
-long int _millis = 0;
-
 void setup()
 {
   Serial.begin(9600);
@@ -59,183 +61,146 @@ void setup()
   Serial2.begin(9600);
   //!乐天口
   Serial3.begin(9600);
-  //!分球传输
-  pinMode(40, INPUT);
-  pinMode(41, OUTPUT);
-  //!射球传输
-  pinMode(42, INPUT);
-  //!顺 逆  右手(52)挥,顺  两手挥,逆
-  pinMode(52, INPUT);
-  digitalWrite(52, LOW);
-  pinMode(53, INPUT);
-  digitalWrite(53, LOW);
-  //自动 手动
-  pinMode(51, INPUT);
-  digitalWrite(51, HIGH);
-  //车后俩按键
-  pinMode(48, INPUT);
-  digitalWrite(48, HIGH);
-  pinMode(49, INPUT);
-  digitalWrite(49, HIGH);
 
+
+
+  //红(HIGH) 蓝(LOW) 队
+  pinMode(A2, INPUT);
+  digitalWrite(A2, HIGH);
+  //!分球传输
+  pinMode(52, OUTPUT);
+  digitalWrite(52, HIGH);
+  pinMode(53, INPUT);
+  digitalWrite(53, HIGH);
+  //!顺 逆
+  pinMode(A0, INPUT);
+  digitalWrite(A0, HIGH);
+  pinMode(A1, INPUT);
+  digitalWrite(A1, HIGH);
   //!显示器启动
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.display();
   delay(500);
   display.clearDisplay();
+
+  Serial2.write('r');
 }
 
 /**
    @brief 主循环
    @note 这是主循环
 */
+
 void loop()
 {
   ComwithYANG();
-  //Judgment_Condition();
-  close_size = 2;
-  Shun_Ni = 0;
-  //step_flag = ;
+  if (digitalRead(A2) == HIGH)
+  {
+    Red_Blue = 0;
+  }
+  else if (digitalRead(A2) == LOW)
+  {
+    Red_Blue = 1;
+  }
 
-  //!路径部分
-  if (close_size == 2)
-  { //走 圈 开 始(大 圈 开 始)
-    if (step_flag == 0)
+  if (step_flag == -1)
+  {
+    if (digitalRead(A0) == LOW || digitalRead(A1) == LOW)
     {
-      if (Shun_Ni == 0)
+      if (digitalRead(shun_PIN) == LOW)
       {
-        closeRound(0, 2400, 1500, 1, 1500, 2);
-#ifdef Logic_DEBUG
-        Serial.print(millis());
-        Serial.println("  closeRound1");
-#endif
+        //顺时针
+        Shun_Ni = 1;
+        step_flag = 0;
       }
-      else
+      else if (digitalRead(ni_PIN) == LOW)
       {
-        closeRound(0, 2400, 1500, 2, 1500, 2);
+        //逆时针
+        Shun_Ni = 2;
+        step_flag = 0;
       }
-//      if (300 < getPos_U.X && getPos_U.X < 500 && 2300 < getPos_U.Y && getPos_U.Y < 2500)
-//        step_flag = 1;
-#ifdef Logic_DEBUG
-      if (millis() - _millis > 3000)
+    }
+  }
+  if (step_flag == 0)
+  {
+    closeRound(0, 2400, 1500, Shun_Ni, 3000, 2);
+    if (700 < getPos_U.X && getPos_U.X < 1200 && 800 < getPos_U.Y && getPos_U.Y < 1200 && Shun_Ni == 1)
+      {
         step_flag = 1;
-#endif
-    }
-    if (step_flag == 1)
-    {
-      if (Shun_Ni == 0)
-      {
-        closeRound(0, 2400, 1000, 1, 1500, 1);
-#ifdef Logic_DEBUG
-        Serial.print(millis());
-        Serial.println("  closeRound2");
-#endif
+        GET_X_before = 0;
+        GET_Y_before = 0;
       }
-      else
+    if (-1200 < getPos_U.X && getPos_U.X < -700 && 800 < getPos_U.Y && getPos_U.Y < 1200 && Shun_Ni == 2)
       {
-        closeRound(0, 2400, 1000, 2, 1500, 1);
-      }
-      if (299 < getPos_U.X && getPos_U.X < 500 && 300 < getPos_U.Y && getPos_U.Y < 500)
-        step_flag = 2;
-#ifdef Logic_DEBUG
-      if (millis() - _millis > 6000)
-        step_flag = 2;
-#endif
-    }
-  } //走 圈 完 毕
-  else
-  { //走 圈 开 始(中 圈 开 始)
-    if (step_flag == 0)
-    {
-      if (Shun_Ni == 0)
-      {
-        closeRound(0, 2400, 1000, 1, 1500, 2);
-#ifdef Logic_DEBUG
-        Serial.print(millis());
-        Serial.println("  closeRound1");
-#endif
-      }
-      else
-      {
-        closeRound(0, 2400, 1000, 2, 1500, 2);
-      }
-      if (300 < getPos_U.X && getPos_U.X < 500 && 2300 < getPos_U.Y && getPos_U.Y < 2500)
         step_flag = 1;
-#ifdef Logic_DEBUG
-      if (millis() - _millis > 3000)
-        step_flag = 1;
-#endif
-    }
-    if (step_flag == 1)
-    {
-      if (Shun_Ni == 0)
-      {
-        closeRound(0, 2400, 500, 1, 1500, 1);
-#ifdef Logic_DEBUG
-        Serial.print(millis());
-        Serial.println("  closeRound2");
-#endif
+        GET_X_before = 0;
+        GET_Y_before = 0;
       }
-      else
+  }
+
+
+  // if (step_flag == 1)
+  // {
+  //   closeRound(0, 2200, 300, Shun_Ni, 3000, 0);
+  //   if (800 < getPos_U.X && getPos_U.X < 1200 && 3600 < getPos_U.Y && getPos_U.Y < 3900 && Shun_Ni == 1)
+  //     step_flag = 2;
+  //   if (-1200 < getPos_U.X && getPos_U.X < -800 && 3600 < getPos_U.Y && getPos_U.Y < 3900 && Shun_Ni == 2)
+  //     step_flag = 2;
+  // }
+  // if(step_flag == 2)
+  // {
+  //   closeRound(0, 1900, 800, Shun_Ni, 3000, 1);
+  //   if (800 < getPos_U.X && getPos_U.X < 1200 && 800 < getPos_U.Y && getPos_U.Y < 1200 && Shun_Ni == 1)
+  //     step_flag = 3;
+  //   if (-1200 < getPos_U.X && getPos_U.X < -800 && 800 < getPos_U.Y && getPos_U.Y < 1200 && Shun_Ni == 2)
+  //     step_flag = 3;
+  // }
+
+
+  //GET_Y_before= getPos_U.Y;
+  if (step_flag == 1)
+  {
+    straightLine(0, 1, 0, 0, 1500);
+     GET_X_d = GET_X_before - getPos_U.X;
+     GET_Y_d = GET_Y_before - getPos_U.Y;
+     GET_POS_d = GET_X_d*GET_X_d+GET_Y_d*GET_Y_d;
+    //if (-100 < getPos_U.X && getPos_U.X < 100 && GET_Y_before- GET_Y_Old < 20 && -10 < getPos_U.ANG && getPos_U.ANG < 10 && 1500 < getPos_U.Y && getPos_U.Y < 1700) //1500 < getPos_U.Y && getPos_U.Y < 1700
+      if(GET_POS_d<10)
       {
-        closeRound(0, 2400, 500, 2, 1500, 1);
+        step_flag = 2;
+        seconds = millis();
       }
-      if (299 < getPos_U.X && getPos_U.X < 500 && 300 < getPos_U.Y && getPos_U.Y < 500)
-        step_flag = 2;
-#ifdef Logic_DEBUG
-      if (millis() - _millis > 6000)
-        step_flag = 2;
-#endif
-    }
-  } //走 圈 完 毕(中 圈 开 始)
+      if(millis()-_millis2>100)
+      {
+        GET_X_before= getPos_U.X;
+        GET_Y_before= getPos_U.Y;
+      }
+  } //GET_Y_before- GET_Y_Old < 50
+
+  //!靠 边 射 球
   if (step_flag == 2)
   {
-    straightLine(1, 0, 0, 0, 1500);
-    //    if(299 < getPos_U.X && getPos_U.X < 500 && 1825 < getPos_U.Y && getPos_U.Y < 1925)
-    //       step_flag = 3;
+    *motorCMD(1, 0, 0);
+    *motorCMD(2, 0, 0);    //停车
+    digitalWrite(To_fenqiu_PIN, LOW); //发送分球标志
+    if (millis() - seconds > 50000) //等待没球
+    {                 //!如 果 要 重 新 跑
+      digitalWrite(To_fenqiu_PIN, HIGH);
+      step_flag = 3;
+    }
   }
   if (step_flag == 3)
-  { //撞 中 间 开 始
-#ifdef Logic_DEBUG
-    Serial.print(millis());
-    Serial.println("  zhuangbian");
-#endif
+  {
     back_Turn(0, 1500);
-    if (digitalRead(48) == LOW && digitalRead(49) == LOW)
-    {
-      PID_speed_Serial[0] = 0;
-      PID_speed_Serial[1] = 0;
-      step_flag = 4;
-    }
-#ifdef Logic_DEBUG
-    if (millis() - _millis > 10000)
-      step_flag = 4;
-#endif
-  } //撞 中 间 完 毕
-
-  if (step_flag == 4)
-  { //开 始 给 分 球，射 球 发 送 标 志
-    digitalWrite(40, HIGH);
-    digitalWrite(42, HIGH);
-    step_flag = 5;
-#ifdef Logic_DEBUG
-    Serial.print(millis());
-    Serial.println("  sheqiu");
-    step_flag = 0;
-    _millis = millis();
-#endif
-  } //结 束 给 分 球，射 球 发 送 标 志
-  if (step_flag == 5)
-  { //若 没 球，重 新 收 球
-    if (digitalRead(41) == HIGH)
+    if (-100 < getPos_U.X && getPos_U.X < 100 && 600 < getPos_U.Y && getPos_U.Y < 1000)
     {
       step_flag = 0;
+     // state_flag++;
     }
   }
+
   ComwithTIAN();
-
   Display();
-
 }
 
 /**
@@ -369,6 +334,7 @@ void Judgment_Condition()
     close_size = 1;
   }
 }
+
 /**
    @brief
 
@@ -392,19 +358,17 @@ void ComwithTIAN()
   //与乐天通信部分
   LEFT_v = motor1();
   RIGHT_v = motor2();
-  //LEFT_v = 1000;
-  //RIGHT_v = 2000;
-  Serial.print("LEFT:");
-  Serial.print(LEFT_v);
-  Serial.print("  Right:");
-  Serial.print(RIGHT_v);
-
-  Serial.print("  x:");
-  Serial.print(getPos_U.X);
-  Serial.print("  y:");
-  Serial.print(getPos_U.Y);
-  Serial.print("  p:");
-  Serial.println(getPos_U.ANG);
+  //  Serial.print("LEFT:");
+  //  Serial.print(LEFT_v);
+  //  Serial.print("  Right:");
+  //  Serial.print(RIGHT_v);
+  //
+  //  Serial.print("  x:");
+  //  Serial.print(getPos_U.X);
+  //  Serial.print("  y:");
+  //  Serial.print(getPos_U.Y);
+  //  Serial.print("  p:");
+  //  Serial.println(getPos_U.ANG);
   unsigned char left1, right1, left2, right2;
   left1 = LEFT_v >> 8;
   right1 = LEFT_v & 0xFF;
@@ -414,20 +378,20 @@ void ComwithTIAN()
   Serial3.write(0xAA);
   delay(10);
   Serial3.write(left1);
-  Serial.print("left1:");
-  Serial.print(left1);
+  //  Serial.print("left1:");
+  //  Serial.print(left1);
   delay(10);
   Serial3.write(right1);
-  Serial.print(" right1:");
-  Serial.print(right1);
+  //  Serial.print(" right1:");
+  //  Serial.print(right1);
   delay(10);
   Serial3.write(left2);
-  Serial.print(" left2:");
-  Serial.print(left2);
+  //  Serial.print(" left2:");
+  //  Serial.print(left2);
   delay(10);
   Serial3.write(right2);
-  Serial.print(" right2:");
-  Serial.println(right2);
+  //  Serial.print(" right2:");
+  //  Serial.println(right2);
   delay(10);
   Serial3.write('N');
   delay(10);
@@ -445,12 +409,12 @@ void Display()
 
     display.setCursor(0, 0);
     display.print("Time:");
-    display.setCursor(40,0);
+    display.setCursor(40, 0);
     display.print(millis());
 
     display.setCursor(0, 10);
     display.print("L:");
-    display.setCursor(10,10);
+    display.setCursor(10, 10);
     display.print(LEFT_v);
 
     display.setCursor(64, 10);
@@ -458,9 +422,9 @@ void Display()
     display.setCursor(74, 10);
     display.print(RIGHT_v);
 
-    display.setCursor(0,18);
+    display.setCursor(0, 18);
     display.print("X:");
-    display.setCursor(10,18);
+    display.setCursor(10, 18);
     display.print(getPos_U.X);
 
     display.setCursor(50, 18);
@@ -472,6 +436,28 @@ void Display()
     display.print("P:");
     display.setCursor(100, 18);
     display.print(getPos_U.ANG);
+
+    //    display.setCursor(0, 26);
+    //    display.print("Red_Blue:");
+    display.setCursor(100, 26);
+    if (Red_Blue == 0)
+    {
+      display.print("Red");
+    }
+    else if (Red_Blue == 1)
+    {
+      display.print("Blue");
+    }
+
+   display.setCursor(0, 34);
+    display.print("step_flag=");
+    display.setCursor(90, 34);
+    display.print(step_flag);
+
+   display.setCursor(0, 46);
+    display.print("GET_POS_d=");
+    display.setCursor(90, 46);
+    display.print(GET_POS_d);
 
     display.display();
     _millis1 = millis();
