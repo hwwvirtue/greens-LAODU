@@ -105,15 +105,15 @@ void loop()
 
   if (step_flag == -1)
   {
-    if (digitalRead(A0) == LOW || digitalRead(A1) == LOW)
+    if (digitalRead(shun_PIN) == LOW || digitalRead(ni_PIN) == LOW)
     {
-      if (digitalRead(shun_PIN) == LOW)
+      if (digitalRead(ni_PIN) == LOW)
       {
         //顺时针
         Shun_Ni = 1;
         step_flag = 0;
       }
-      else if (digitalRead(ni_PIN) == LOW)
+      else if (digitalRead(shun_PIN) == LOW)
       {
         //逆时针
         Shun_Ni = 2;
@@ -123,14 +123,14 @@ void loop()
   }
   if (step_flag == 0)
   {
-    closeRound(0, 2400, 1500, Shun_Ni, 3000, 2);
-    if (700 < getPos_U.X && getPos_U.X < 1200 && 800 < getPos_U.Y && getPos_U.Y < 1200 && Shun_Ni == 1)
+    closeRound(0, 1900, 800, Shun_Ni, 3000, 2);
+    if (480 < getPos_U.X && getPos_U.X < 880 && 200 < getPos_U.Y && getPos_U.Y < 600 && Shun_Ni == 1)
       {
         step_flag = 1;
         GET_X_before = 0;
         GET_Y_before = 0;
       }
-    if (-1200 < getPos_U.X && getPos_U.X < -700 && 800 < getPos_U.Y && getPos_U.Y < 1200 && Shun_Ni == 2)
+    if (-880 < getPos_U.X && getPos_U.X < -480 && 200 < getPos_U.Y && getPos_U.Y < 600 && Shun_Ni == 2)
       {
         step_flag = 1;
         GET_X_before = 0;
@@ -183,7 +183,7 @@ void loop()
     *motorCMD(1, 0, 0);
     *motorCMD(2, 0, 0);    //停车
     digitalWrite(To_fenqiu_PIN, LOW); //发送分球标志
-    if (millis() - seconds > 50000) //等待没球
+    if (millis() - seconds > 100000) //等待没球
     {                 //!如 果 要 重 新 跑
       digitalWrite(To_fenqiu_PIN, HIGH);
       step_flag = 3;
@@ -192,7 +192,7 @@ void loop()
   if (step_flag == 3)
   {
     back_Turn(0, 1500);
-    if (-100 < getPos_U.X && getPos_U.X < 100 && 600 < getPos_U.Y && getPos_U.Y < 1000)
+    if (-100 < getPos_U.X && getPos_U.X < 100 && 400 < getPos_U.Y && getPos_U.Y < 8000)
     {
       step_flag = 0;
      // state_flag++;
